@@ -5,26 +5,83 @@ date: "10/12/2019"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+First I will call the packages needed to graph and manipulate the data.
+```{r}
+library(ggplot2)
+library(tidyverse)
+library(dplyr)
 ```
 
-## R Markdown
+#**Data Inspection**
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+##**Inspection of fang_et_al_genotypes.txt**
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+Reading in the data
+```{r}
+fang = read.delim("fang_et_al_genotypes.txt", header = TRUE, sep = "\t")
+```
+Checking the rows and columns of the file: The file appears to have 2782 rows and 986 columns. Thus there are 2782 unique observations. This is a very large file and thus it will be unreasonable to by hand look at all the columns or data points. The byte size is 12,163,888.
+```{r}
+dim(fang)
+object.size(fang)
 ```
 
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+Checking on the first six rows of the data I'm able to pull a couple pieces of information. The Samples are labled in the "Sample_ID" colume. Missing data appears to be indicated with "?" and the diploid copies of each SNP location is separted with "/". The 2nd and 3rd column both have other info on the samples but are not SNP data.
+```{r}
+head(fang)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+
+
+##**Inspection of snp_position.txt**
+
+Reading in the data
+```{r}
+snp = read.delim("snp_position.txt", header = TRUE, sep = "\t")
+```
+
+Checking the rows and columns on the SNP file there appears to be 15 columns and 983 rows. Supbracting the rows in the fang file that are not relavent to the SNP locations the amount of SNP observations matches on both files. The file overall is 324,472 bytes.
+```{r}
+dim(snp)
+object.size(snp)
+```
+This file however has the formating of data in a transposed version of the fang file. In addition it has the chromosome and position that the SNP are located on. The rest of the column headers are extra info that may not be needed later on.
+```{r}
+head(snp)
+names(snp)
+```
+
+
+#**Data Processing**
+First I need to transpose the fang file after removing the columns I don't care about.
+```{r}
+fang = fang %>%
+  select(1, 4:986)
+snp = snp %>%
+  select(1,3,4)
+```
+
+Next I transposed the fang data, wrote it to a seperate file without the headers(they will be added back later when combined with the SNP file), and read that file back into R with the headers. Now the SNP locations are going across the top of the file. I then took the SNP first column and added it onto the beginging of the fang file -> Laveledfang. Now we have two files that are ready for merging!
+```{r}
+Tfang = as.data.frame(t(fang))
+write_csv(Tfang, "TfangNoHeaders", col_names = FALSE)
+Tfang2 = read_csv("TfangNoHeaders", col_names = TRUE)
+Sample_ID = snp %>%
+  select(1)
+Labeledfang = cbind(Sample_ID, Tfang2)
+rm(SNP_ID)
+```
+
+Now I'm going to merge both files by the first column that they share.
+```{r}
+MergedFile = merge(snp, Labeledfang, by="SNP_ID")
+```
+
+Great! Now we have a file to work with for the rest of the data analysis. However I want to write this file into a .csv doc because I will be working with it a lot. That way I have it if ever needed.
+```{r}
+write_csv(MergedFile, "MergedData", col_names = TRUE)
+```
+
+
