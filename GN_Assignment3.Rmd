@@ -76,7 +76,7 @@ snp = snp %>%
   select(1,3,4)
 ```
 
-Next I transposed the fang data for the maize and teosinte, wrote it to a seperate file without the headers(they will be added back later when combined with the SNP file), and read that file back into R with the headers. Now the SNP locations are going across the top of the file. I then took the SNP first column and added it onto the beginging of the fang file -> Laveledfang. Now we have two files that are ready for merging!
+Next I transposed the fang data for the maize and teosinte, wrote it to a seperate file without the headers(they will be added back later when combined with the SNP file), and read that file back into R with the headers. Now the SNP locations are going across the top of the file. I then took the SNP first column and added it onto the beginging of the fang file -> Labeledfang. Now we have two files that are ready for merging!
 
 ```{r}
 Tteosinte = as.data.frame(t(teosinte))
@@ -200,5 +200,8 @@ while(i <= 10){
 ```
 
 #**Part 2: Data Visualizaion**
+```{r}
+
+```
 
 
