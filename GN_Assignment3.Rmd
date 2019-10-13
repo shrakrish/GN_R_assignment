@@ -10,6 +10,7 @@ First I will call the packages needed to graph and manipulate the data.
 library(ggplot2)
 library(tidyverse)
 library(dplyr)
+library(forcats)
 ```
 
 #**Data Inspection**
@@ -76,11 +77,18 @@ snp = snp %>%
 ```
 
 Next I transposed the fang data for the maize and teosinte, wrote it to a seperate file without the headers(they will be added back later when combined with the SNP file), and read that file back into R with the headers. Now the SNP locations are going across the top of the file. I then took the SNP first column and added it onto the beginging of the fang file -> Laveledfang. Now we have two files that are ready for merging!
+
 ```{r}
 Tteosinte = as.data.frame(t(teosinte))
 Tmaize = as.data.frame(t(maize))
+```
+
+```{r}
 write_csv(Tteosinte, "TeoNoHeaders", col_names = FALSE)
 write_csv(Tmaize, "MaizeNoHeaders", col_names = FALSE)
+```
+
+```{r}
 Tteosinte2 = read_csv("TeoNoHeaders", col_names = TRUE)
 Tmaize2 = read_csv("MaizeNoHeaders", col_names = TRUE)
 Sample_ID = snp %>%
@@ -105,13 +113,92 @@ write_csv(MergedMaize, "MergedMaize", col_names = TRUE)
 ZMMIL, ZMMLR, and ZMMMR
 *The file that I'm working with at the start is MergedTeo*
 
+First I'm going to filter out by the chromosome, arrange that such that the position is ordered in ascending order, and then write those as seperate files. I was having issuse at first due to the posion column's data type being listed as Factor and not a numeric value. By adding in the line of code that converted the data to numeric I was able to get around this.
+```{r}
+setwd("C:/Users/gnick/Box/EEOB 546X/GN_R_assignment/teosinte/Ascending")
+#I want to store the files in this specific folder hence why I had to change to working directory
+i = 1
+while(i <= 10){
+  a = i
+  ChromTeosinteAscending = filter(MergedTeo, MergedTeo$Chromosome == a)
+  ChromTeosinteAscending$Position = as.numeric(as.character(ChromTeosinteAscending$Position))
+  ChromTeosinteAscending = ChromTeosinteAscending[order(ChromTeosinteAscending$Position), ]
+  write_csv(ChromTeosinteAscending, sprintf("Ascending_TeoChromosome_%s", a), col_names = TRUE)
+  i = i + 1
+}
+```
 
+First step is to replace the ? characters with the - character.
+```{r}
+i = 4 
+DecMergedTeo = MergedTeo
+for(i in names(DecMergedTeo)){
+  DecMergedTeo[[i]] = gsub("\\?","-", DecMergedTeo[[i]])
+}
 
+```
+Now I need to as last time seperate out the chromosomes and order them in decreasing order.
+```{r}
+setwd("C:/Users/gnick/Box/EEOB 546X/GN_R_assignment/teosinte/Decreasing")
+#again I changed the working directory to put the files in the correct folder
+
+i = 1
+while(i <= 10){
+  a = i
+  ChromTeosinteDecreasing = filter(DecMergedTeo, DecMergedTeo$Chromosome == a)
+  ChromTeosinteDecreasing$Position = as.numeric(as.character(ChromTeosinteDecreasing$Position))
+  ChromTeosinteDecreasing = ChromTeosinteDecreasing[order(ChromTeosinteDecreasing$Position, decreasing = TRUE), ]
+  write_csv(ChromTeosinteDecreasing, sprintf("Decreasing_TeoChromosome_%s", a), col_names = TRUE)
+  i = i + 1
+}
+```
+Great! Now I have all 20 of the files I needed organized into files within the repository. Now the easy part, doing the same with the maize files. Since most of the code will be recycled I'm not going to put as many comments over every chunk I run.
 
 ##**Maize**
 ZMPBA, ZMPIL, and ZMPJA
 *The file that I'm working with at the start is MergedMaize*
 
+First as last time I'm doing the ascending order.
+```{r}
+setwd("C:/Users/gnick/Box/EEOB 546X/GN_R_assignment/maize/Ascending")
+#I want to store the files in this specific folder hence why I had to change to working directory
+i = 1
+while (i <= 10){
+  a = i
+  ChromMaizeAscending = filter(MergedMaize, MergedMaize$Chromosome == a)
+  ChromMaizeAscending$Position = as.numeric(as.character(ChromMaizeAscending$Position))
+  ChromMaizeAscending = ChromMaizeAscending[order(ChromMaizeAscending$Position), ]
+  write_csv(ChromMaizeAscending, sprintf("Ascending_MaizeChromosome_%s", a), col_names = TRUE)
+  i = i + 1
+}
 
+```
+
+Now I will replace the ? characters with the - character.
+```{r}
+i = 4 
+DecMergedMaize = MergedMaize
+for(i in names(DecMergedMaize)){
+  DecMergedMaize[[i]] = gsub("\\?","-", DecMergedMaize[[i]])
+}
+
+```
+Next I'm seperating out the chromosomes and ordering them in decreasing order.
+```{r}
+setwd("C:/Users/gnick/Box/EEOB 546X/GN_R_assignment/maize/Decreasing")
+#again I changed the working directory to put the files in the correct folder
+
+i = 1
+while(i <= 10){
+  a = i
+  ChromMaizeDecreasing = filter(DecMergedMaize, DecMergedMaize$Chromosome == a)
+  ChromMaizeDecreasing$Position = as.numeric(as.character(ChromMaizeDecreasing$Position))
+  ChromMaizeDecreasing = ChromMaizeDecreasing[order(ChromMaizeDecreasing$Position, decreasing = TRUE), ]
+  write_csv(ChromMaizeDecreasing, sprintf("Decreasing_MaizeChromosome_%s", a), col_names = TRUE)
+  i = i + 1
+}
+```
+
+#**Part 2: Data Visualizaion**
 
 
