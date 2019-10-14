@@ -200,6 +200,23 @@ while(i <= 10){
 ```
 
 #**Part 2: Data Visualizaion**
+First since we now want to graph all of the data in the fang file, and not just the maize and teosinte files, I'm going to repeat the steps I did earlier but without seperating out groups.
+```{r}
+install.packages("reshape2")
+library(reshape2)
+
+AllData = fang %>%
+  select(1, 4:986)
+TAllData = as.data.frame(t(AllData))
+write_csv(TAllData, "fangNoHeaders", col_names = FALSE)
+fang2 = read_csv("fangNoHeaders", col_names = TRUE)
+Labeledfang = cbind(Sample_ID, fang2)
+Mergedfang = merge(snp, Labeledfang, by="SNP_ID")
+
+```
+
+
+##SNPs per chromosome
 ```{r}
 
 ```
