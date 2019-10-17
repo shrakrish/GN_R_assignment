@@ -30,7 +30,7 @@ object.size(fang)
 
 Checking on the first six rows of the data I'm able to pull a couple pieces of information. The Samples are labled in the "Sample_ID" colume. Missing data appears to be indicated with "?" and the diploid copies of each SNP location is separted with "/". The 2nd and 3rd column both have other info on the samples but are not SNP data.
 ```{r}
-head(fang)
+View(fang)
 ```
 
 
@@ -51,7 +51,7 @@ object.size(snp)
 ```
 This file however has the formating of data in a transposed version of the fang file. In addition it has the chromosome and position that the SNP are located on. The rest of the column headers are extra info that may not be needed later on.
 ```{r}
-head(snp)
+View(snp)
 names(snp)
 ```
 
@@ -208,7 +208,6 @@ library(plyr)
 MergedMaize2 = MergedMaize %>%
   select(1, 4:978)
 MergedCombined = merge(MergedMaize2, MergedTeo, by="SNP_ID")
-MergedCombined = melt(MergedCombined)
 MergedCombined = merge(snp, MergedCombined, by="SNP_ID")
 MergedCombined = rename(MergedCombined, c("Position.x" = "Position", "Chromosome.x" = "Chromosome"))
 ```
@@ -228,22 +227,29 @@ Because it is impossible to graph the SNP positions when they are listed as unkn
 MergedCombined$Position = as.numeric(as.character(MergedCombined$Position))
 MergedCombinedFiltered = filter(MergedCombined, as.numeric(as.character(Position)) >= 1)
 MergedCombinedFiltered = subset(MergedCombined, !(Chromosome %in% "multiple" | Chromosome %in% "unknown" | Position %in% "multiple" | Position %in% "unknown" | Position %in% ""))
-
+Chromosomes = c("multiple", "unknown", "")
+levels(MergedCombinedFiltered$Chromosome)[match(Chromosomes, levels(MergedCombinedFiltered$Chromosome))] = NA
 MergedCombinedFiltered = MergedCombinedFiltered %>%
   mutate(PositionRange = cut(Position, 5));
 ```
-The first graph has the PositionRange on the X-axis. This mutated category is just the Position column binned into five groups. The choice of 5 is arbitary, but it shows that several of the chromosomes have SNPs in roughly the 1st bin only. This could be from those chromosomes being smaller, or the SNPs measured just all being in that region of those chromosomes. 
+The first graph is the density split by all the chromosomes. 
 
-The second graph is the density split by all the chromosomes. 
+The second graph has the PositionRange on the X-axis. This mutated category is just the Position column binned into five groups. The choice of 5 is arbitary, but it shows that several of the chromosomes have SNPs in roughly the 1st bin only. This could be from those chromosomes being smaller, or the SNPs measured just all being in that region of those chromosomes. 
+
+
 ```{r}
 ggplot(data = MergedCombinedFiltered) + 
   geom_density(mapping=aes(x = Chromosome, fill = Chromosome), alpha = 0.15) +
   ggtitle("SNP density on each chromosome")
 
+Chromosomes = c("multiple", "unknown", "")
+levels(MergedCombinedFiltered$Chromosome)[match(Chromosomes, levels(MergedCombinedFiltered$Chromosome))] = NA
+
 ggplot(data = MergedCombinedFiltered) + 
   geom_density(mapping=aes(x = PositionRange, fill = Chromosome), alpha = 0.15) +
-  ggtitle("SNP density on its position on the chromosome")
-
+  ggtitle("SNP density on its position on the chromosome") +
+  theme(axis.text.x=element_blank())
+##NOTE the graph for this one says fewer than two data points have been dropped as it dropped the position ranges that were null
 ```
 
 ###**Missing data and amount of heterozygosity**
