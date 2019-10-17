@@ -4,6 +4,7 @@ author: "Grant Nickles"
 date: "10/12/2019"
 output: html_document
 ---
+BEFORE RUNNING THE CODE SET THE WORKING DIRECTORY TO THE REPOSITORY FOLDER. Everything should work after this point.
 
 First I will call the packages needed to graph and manipulate the data.
 ```{r}
@@ -115,7 +116,7 @@ ZMMIL, ZMMLR, and ZMMMR
 
 First I'm going to filter out by the chromosome, arrange that such that the position is ordered in ascending order, and then write those as seperate files. I was having issuse at first due to the posion column's data type being listed as Factor and not a numeric value. By adding in the line of code that converted the data to numeric I was able to get around this.
 ```{r}
-setwd("C:/Users/gnick/Box/EEOB 546X/GN_R_assignment/teosinte/Ascending")
+setwd("./teosinte/Ascending")
 #I want to store the files in this specific folder hence why I had to change to working directory
 i = 1
 while(i <= 10){
@@ -139,7 +140,7 @@ for(i in names(DecMergedTeo)){
 ```
 Now I need to as last time seperate out the chromosomes and order them in decreasing order.
 ```{r}
-setwd("C:/Users/gnick/Box/EEOB 546X/GN_R_assignment/teosinte/Decreasing")
+setwd("./teosinte/Decreasing")
 #again I changed the working directory to put the files in the correct folder
 
 i = 1
@@ -160,7 +161,7 @@ ZMPBA, ZMPIL, and ZMPJA
 
 First as last time I'm doing the ascending order.
 ```{r}
-setwd("C:/Users/gnick/Box/EEOB 546X/GN_R_assignment/maize/Ascending")
+setwd("./maize/Ascending")
 #I want to store the files in this specific folder hence why I had to change to working directory
 i = 1
 while (i <= 10){
@@ -185,7 +186,7 @@ for(i in names(DecMergedMaize)){
 ```
 Next I'm seperating out the chromosomes and ordering them in decreasing order.
 ```{r}
-setwd("C:/Users/gnick/Box/EEOB 546X/GN_R_assignment/maize/Decreasing")
+setwd("./maize/Decreasing")
 #again I changed the working directory to put the files in the correct folder
 
 i = 1
@@ -200,25 +201,115 @@ while(i <= 10){
 ```
 
 #**Part 2: Data Visualizaion**
-First since we now want to graph all of the data in the fang file, and not just the maize and teosinte files, I'm going to repeat the steps I did earlier but without seperating out groups.
+First since we now want to graph all of the data for the maize and teosinte fang file, I'm going to repeat the steps I did earlier but combining both groups.
 ```{r}
-install.packages("reshape2")
 library(reshape2)
-
-AllData = fang %>%
-  select(1, 4:986)
-TAllData = as.data.frame(t(AllData))
-write_csv(TAllData, "fangNoHeaders", col_names = FALSE)
-fang2 = read_csv("fangNoHeaders", col_names = TRUE)
-Labeledfang = cbind(Sample_ID, fang2)
-Mergedfang = merge(snp, Labeledfang, by="SNP_ID")
-
+library(plyr)
+MergedMaize2 = MergedMaize %>%
+  select(1, 4:978)
+MergedCombined = merge(MergedMaize2, MergedTeo, by="SNP_ID")
+MergedCombined = melt(MergedCombined)
+MergedCombined = merge(snp, MergedCombined, by="SNP_ID")
+MergedCombined = rename(MergedCombined, c("Position.x" = "Position", "Chromosome.x" = "Chromosome"))
 ```
 
 
-##SNPs per chromosome
+##**SNPs per chromosome**
+###**Total number of SNPs in our dataset per chromosomes
 ```{r}
+ggplot(data = MergedCombined) +
+  geom_bar(mapping = aes(x = Chromosome, fill = Chromosome)) +
+  ggtitle("SNPs per chromosome")
+
+```
+###**Distribution of SNPs on chromosomes**
+Because it is impossible to graph the SNP positions when they are listed as unknown or multiple I am first going to drop this data. The dropped data is now in MergedCombinedFiltered. There are several ways to show the disrubution of the of the SNPs on the chromosomes so I chosed to graph the distruptions on the length of the chromosome, and on the chromosome altogether. 
+```{r}
+MergedCombined$Position = as.numeric(as.character(MergedCombined$Position))
+MergedCombinedFiltered = filter(MergedCombined, as.numeric(as.character(Position)) >= 1)
+MergedCombinedFiltered = subset(MergedCombined, !(Chromosome %in% "multiple" | Chromosome %in% "unknown" | Position %in% "multiple" | Position %in% "unknown" | Position %in% ""))
+
+MergedCombinedFiltered = MergedCombinedFiltered %>%
+  mutate(PositionRange = cut(Position, 5));
+```
+The first graph has the PositionRange on the X-axis. This mutated category is just the Position column binned into five groups. The choice of 5 is arbitary, but it shows that several of the chromosomes have SNPs in roughly the 1st bin only. This could be from those chromosomes being smaller, or the SNPs measured just all being in that region of those chromosomes. 
+
+The second graph is the density split by all the chromosomes. 
+```{r}
+ggplot(data = MergedCombinedFiltered) + 
+  geom_density(mapping=aes(x = Chromosome, fill = Chromosome), alpha = 0.15) +
+  ggtitle("SNP density on each chromosome")
+
+ggplot(data = MergedCombinedFiltered) + 
+  geom_density(mapping=aes(x = PositionRange, fill = Chromosome), alpha = 0.15) +
+  ggtitle("SNP density on its position on the chromosome")
 
 ```
 
+###**Missing data and amount of heterozygosity**
+
+For this graph we don't even need the data in the SNP file. I'm going to format the fang file to be how we want it. 
+
+
+```{r}
+teosinteMaizeTarget = c('ZMMIL','ZMMLR','ZMMMR', 'ZMPBA', 'ZMPIL', 'ZMPJA')
+plot_final = filter(fang, Group %in% teosinteMaizeTarget)
+plot_final = plot_final %>%
+  select(1, 4:986)
+
+plot_final = plot_final %>% 
+  pivot_longer(-Sample_ID, names_to = "SNP_Name", values_to = "SNP_values")
+#first I need to convert all the homozygotes the phrase "homozygous"
+homozygotes = c("T/T", "C/C", "A/A", "G/G")
+levels(plot_final$SNP_values)[match(homozygotes, levels(plot_final$SNP_values))] = "homozygous"
+
+#now I'm going to change all the missing data to say "missing"
+missing_data = c("?/?", "?/(A|G|C|T)", "(A|G|C|T)/?")
+levels(plot_final$SNP_values)[match(missing_data, levels(plot_final$SNP_values))] = "missing_data"
+
+#lastly I'm going to convert any other data to heterozygous
+heterozygotes = c("A/G", "A/C","A/T", "G/C", "G/T","G/A", "T/C","T/A", "T/G","C/A", "C/T","C/G")
+levels(plot_final$SNP_values)[match(heterozygotes, levels(plot_final$SNP_values))] = "heterozygotes"
+
+```
+**Plotting the graphs**
+The first graph is showing the density of the heterozygous/homozygous/missing data across all the samples
+```{r}
+ggplot(date = plot_final) +
+  geom_bar(mapping = aes(x = plot_final$Sample_ID, fill = plot_final$SNP_values), position = "fill") +
+  theme(axis.text.x=element_blank(),
+  axis.ticks.x=element_blank()) +
+  ggtitle("Density of homo/heterozygous data \nacross SNP reads for every Sample") +
+  labs( y = "Density", x = "Samples")
+```
+
+The second graph is showing the density of the heterozygous/homozygous/missing data across all the groups
+```{r}
+plot_final2 = filter(fang, Group %in% teosinteMaizeTarget)
+plot_final2 = plot_final2 %>%
+  select(3:986)
+
+plot_final2 = plot_final2 %>% 
+  pivot_longer(-Group, names_to = "SNP_Name", values_to = "SNP_values")
+#first I need to convert all the homozygotes the phrase "homozygous"
+levels(plot_final2$SNP_values)[match(homozygotes, levels(plot_final2$SNP_values))] = "homozygous"
+
+#now I'm going to change all the missing data to say "missing"
+levels(plot_final2$SNP_values)[match(missing_data, levels(plot_final2$SNP_values))] = "missing_data"
+
+#lastly I'm going to convert any other data to heterozygous.
+levels(plot_final2$SNP_values)[match(heterozygotes, levels(plot_final2$SNP_values))] = "heterozygotes"
+
+#for the purposes of getting useful information, I want to change the group names to teosinte or maize depending on which category they fall in
+levels(plot_final2$Group)[match(maizeTarget, levels(plot_final2$Group))] = "Maize"
+levels(plot_final2$Group)[match(teosinteTarget, levels(plot_final2$Group))] = "Teosinte"
+```
+
+Now I'm going to graph it out seperating out the maize and teosinte groups.
+```{r}
+ggplot(date = plot_final2) +
+  geom_bar(mapping = aes(x = plot_final2$Group, fill = plot_final2$SNP_values), position = "fill") +
+  ggtitle("Density of homo/heterozygous data \nacross Maize and Teosinte groups") +
+  labs( y = "Density", x = "Samples")
+```
 
