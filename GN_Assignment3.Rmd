@@ -221,7 +221,7 @@ ggplot(data = MergedCombined) +
   ggtitle("SNPs per chromosome")
 
 ```
-###**Distribution of SNPs on chromosomes**
+###**Distribution of SNPs on chromosomes and my personal graph**
 Because it is impossible to graph the SNP positions when they are listed as unknown or multiple I am first going to drop this data. The dropped data is now in MergedCombinedFiltered. There are several ways to show the disrubution of the of the SNPs on the chromosomes so I chosed to graph the distruptions on the length of the chromosome, and on the chromosome altogether. 
 ```{r}
 MergedCombined$Position = as.numeric(as.character(MergedCombined$Position))
@@ -232,9 +232,9 @@ levels(MergedCombinedFiltered$Chromosome)[match(Chromosomes, levels(MergedCombin
 MergedCombinedFiltered = MergedCombinedFiltered %>%
   mutate(PositionRange = cut(Position, 5));
 ```
-The first graph is the density split by all the chromosomes. 
+The **first graph** is the density split by all the chromosomes. 
 
-The second graph has the PositionRange on the X-axis. This mutated category is just the Position column binned into five groups. The choice of 5 is arbitary, but it shows that several of the chromosomes have SNPs in roughly the 1st bin only. This could be from those chromosomes being smaller, or the SNPs measured just all being in that region of those chromosomes. 
+The **second graph** has the PositionRange on the X-axis. This mutated category is just the Position column binned into five groups. The choice of 5 is arbitary, but it shows that several of the chromosomes have SNPs in roughly the 1st bin only. This could be from those chromosomes being smaller, or the SNPs measured just all being in that region of those chromosomes. **this is my personal graph that we were asked to create.**
 
 
 ```{r}
