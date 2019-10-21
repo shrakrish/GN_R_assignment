@@ -1,0 +1,50 @@
+---
+title: "Review"
+output: html_document
+---
+
+1. The first half of the code ran pretty smoothly.
+However for this part, 
+
+```{r}
+Tteosinte = as.data.frame(t(teosinte))
+Tmaize = as.data.frame(t(maize))
+```
+
+```{r}
+write_csv(Tteosinte, "TeoNoHeaders", col_names = FALSE)
+write_csv(Tmaize, "MaizeNoHeaders", col_names = FALSE)
+```
+
+```{r}
+Tteosinte2 = read_csv("TeoNoHeaders", col_names = TRUE)
+Tmaize2 = read_csv("MaizeNoHeaders", col_names = TRUE)
+Sample_ID = snp %>%
+  select(1)
+LabeledTeo = cbind(Sample_ID, Tteosinte2)
+LabeledMaize = cbind(Sample_ID, Tmaize2)
+```
+
+2.I think that once you transpose the maize and teosinte files, you should automatically have column 1 that matches the SNP file. The only issue would be that it would have no heading. you can add a heading and make sure it's common with the snp file and merge it later. That would be simpler, however what ypu've used works as well so no problems there!
+
+3. When it came to this part, I had problems running it and I'm not quite sure why
+```{r}
+setwd("./teosinte/Ascending")
+#I want to store the files in this specific folder hence why I had to change to working directory
+i = 1
+while(i <= 10){
+  a = i
+  ChromTeosinteAscending = filter(MergedTeo, MergedTeo$Chromosome == a)
+  ChromTeosinteAscending$Position = as.numeric(as.character(ChromTeosinteAscending$Position))
+  ChromTeosinteAscending = ChromTeosinteAscending[order(ChromTeosinteAscending$Position), ]
+  write_csv(ChromTeosinteAscending, sprintf("Ascending_TeoChromosome_%s", a), col_names = TRUE)
+  i = i + 1
+}
+```
+
+4.This is the error it kept showing me : Show in New WindowClear OutputExpand/Collapse Output
+
+NAs introduced by coercionNAs introduced by coercionNAs introduced by coercionNAs introduced by coercionNAs introduced by coercion
+
+5. The visualisation part of your code was perfect! The graphs look great! 
+
